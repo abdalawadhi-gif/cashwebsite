@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="حجز جلسة استشارة — كاش كلينك" name="description"/>
+<meta content="#0E1530" name="theme-color"/>
+<title>احجز جلستك — Cash Clinic</title>
+<link href="assets/img/cashclinic-logo.jpg" rel="icon" type="image/jpeg"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="assets/css/style.css?v=8" rel="stylesheet"/>
+<link href="assets/css/booking.css?v=8" rel="stylesheet"/>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <nav class="nav">
+      <a class="brand" href="index.html">
+        <div class="brand-mark">
+          <img alt="Cash Clinic" src="assets/img/cashclinic-logo.jpg"/>
+        </div>
+        <div class="brand-name">
+          <span class="blue">Cash</span><span class="orange">Clinic.</span>
+        </div>
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html#clinics" data-en="Clinics">عياداتنا</a></li>
+        <li><a href="index.html#consultants" data-en="Consultants">استشاريونا</a></li>
+        <li><a href="policy.html" data-en="Policy">السياسة</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button aria-label="Switch language" class="lang-toggle" id="langToggle">EN</button>
+        <button aria-label="Menu" class="menu-toggle" id="menuToggle">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<!-- Empty state shown when no package param in URL -->
+<section class="booking-empty" id="bookingEmpty" style="display:none;">
+  <div class="container">
+    <div class="empty-card">
+      <div class="empty-icon">📅</div>
+      <h1 data-en="Pick a package to begin">اختر باقة لتبدأ الحجز</h1>
+      <p data-en="To book a session, please pick the right package for you from one of our four clinics.">
+        لحجز جلسة، اختر الباقة المناسبة لك من إحدى عياداتنا الأربع.
+      </p>
+      <a class="btn btn-gold btn-large" href="index.html#clinics" data-en="Browse Clinics">تصفح العيادات</a>
+    </div>
+  </div>
+</section>
+
+<!-- Booking flow -->
+<main class="booking" id="bookingMain" style="display:none;">
+  <div class="container">
+
+    <a class="back-link" href="javascript:history.back()" data-en="&lt;span class='arrow'&gt;←&lt;/span&gt; Back">
+      <span class="arrow">←</span> رجوع
+    </a>
+
+    <div class="booking-grid">
+
+      <!-- LEFT: form -->
+      <div class="booking-form">
+
+        <!-- Step indicator -->
+        <ol class="step-indicator">
+          <li class="step active" data-step="1">
+            <span class="step-num">1</span>
+            <span class="step-label" data-en="Date &amp; Time">الموعد</span>
+          </li>
+          <li class="step" data-step="2">
+            <span class="step-num">2</span>
+            <span class="step-label" data-en="Your Info">معلوماتك</span>
+          </li>
+          <li class="step" data-step="3">
+            <span class="step-num">3</span>
+            <span class="step-label" data-en="Confirm &amp; Pay">المراجعة والدفع</span>
+          </li>
+        </ol>
+
+        <!-- ─── STEP 1: Date & Time ─── -->
+        <section class="step-panel active" data-step="1">
+          <h2 data-en="Choose date &amp; time">اختر الموعد المناسب</h2>
+          <p class="step-lede" data-en="Pick an available day and time slot that works for you." >
+            اختر اليوم والوقت المناسب لجلستك.
+          </p>
+
+          <!-- Format toggle -->
+          <div class="field" id="formatField">
+            <label data-en="Session format">صيغة الجلسة</label>
+            <div class="segmented" id="formatSegmented" role="radiogroup">
+              <button class="seg-btn active" data-value="online" data-en="💻 Online">💻 أونلاين</button>
+              <button class="seg-btn" data-value="in-person" data-en="🏢 In-person">🏢 حضوري</button>
+            </div>
+          </div>
+
+          <!-- Calendar -->
+          <div class="field">
+            <label data-en="Pick a date">اختر اليوم</label>
+            <div class="calendar" id="calendar">
+              <div class="cal-header">
+                <button class="cal-nav" id="calPrev" aria-label="Previous month">‹</button>
+                <div class="cal-month" id="calMonth"></div>
+                <button class="cal-nav" id="calNext" aria-label="Next month">›</button>
+              </div>
+              <div class="cal-weekdays" id="calWeekdays"></div>
+              <div class="cal-grid" id="calGrid"></div>
+            </div>
+          </div>
+
+          <!-- Time slots -->
+          <div class="field" id="slotsField" style="display:none;">
+            <label>
+              <span data-en="Available times for">المواعيد المتاحة لـ</span>
+              <strong id="selectedDateLabel"></strong>
+            </label>
+            <div class="time-slots" id="timeSlots"></div>
+          </div>
+
+          <div class="step-actions">
+            <button class="btn btn-gold btn-large" id="toStep2" disabled data-en="Continue →">متابعة →</button>
+          </div>
+        </section>
+
+        <!-- ─── STEP 2: Personal info ─── -->
+        <section class="step-panel" data-step="2">
+          <h2 data-en="Your information">معلوماتك</h2>
+          <p class="step-lede" data-en="We'll use these to send your confirmation and session details.">
+            نستخدم هذه المعلومات لإرسال تأكيد الحجز وتفاصيل الجلسة.
+          </p>
+
+          <div class="field">
+            <label for="fullName" data-en="Full name">الاسم الكامل</label>
+            <input type="text" id="fullName" required>
+          </div>
+          <div class="field">
+            <label for="phone">
+              <span data-en="Phone (with country code)">رقم الهاتف (مع رمز الدولة)</span>
+            </label>
+            <input type="tel" id="phone" placeholder="+965 5XXX XXXX" required>
+          </div>
+          <div class="field">
+            <label for="email" data-en="Email">البريد الإلكتروني</label>
+            <input type="email" id="email" required>
+          </div>
+          <div class="field">
+            <label for="notes">
+              <span data-en="Notes (optional)">ملاحظات (اختياري)</span>
+            </label>
+            <textarea id="notes" rows="3" placeholder=""></textarea>
+          </div>
+
+          <div class="step-actions">
+            <button class="btn btn-outline" data-back data-en="← Back">← السابق</button>
+            <button class="btn btn-gold" id="toStep3" data-en="Continue →">متابعة →</button>
+          </div>
+        </section>
+
+        <!-- ─── STEP 3: Review ─── -->
+        <section class="step-panel" data-step="3">
+          <h2 data-en="Review &amp; pay">المراجعة والدفع</h2>
+          <p class="step-lede" data-en="Confirm your booking details. Payment is processed securely via Tap.">
+            راجع تفاصيل الحجز. الدفع آمن ومشفر عبر Tap.
+          </p>
+
+          <div class="review-card" id="reviewCard"></div>
+
+          <div class="policy-agree">
+            <label>
+              <input type="checkbox" id="agreePolicy">
+              <span data-en="I have read and agree to the appointment policy">
+                لقد قرأت ووافقت على سياسة المواعيد
+              </span>
+              <a href="policy.html" target="_blank" data-en="(read policy)">(قراءة السياسة)</a>
+            </label>
+          </div>
+
+          <div class="step-actions">
+            <button class="btn btn-outline" data-back data-en="← Back">← السابق</button>
+            <button class="btn btn-gold btn-large" id="payBtn" disabled>
+              <span data-en="Pay">دفع</span>
+              <strong id="payAmount"></strong>
+              <span data-en="via Tap →">عبر Tap →</span>
+            </button>
+          </div>
+
+          <div class="payment-status" id="paymentStatus" style="display:none;"></div>
+        </section>
+
+      </div><!-- /booking-form -->
+
+      <!-- RIGHT: sticky summary -->
+      <aside class="booking-summary">
+        <div class="summary-card">
+          <div class="summary-clinic" id="summaryClinic"></div>
+          <div class="summary-tag" id="summaryTag"></div>
+          <h3 class="summary-name" id="summaryName"></h3>
+          <div class="summary-divider"></div>
+          <div class="summary-rows">
+            <div class="summary-row">
+              <span data-en="Consultant">الاستشاري</span>
+              <strong id="summaryConsultant"></strong>
+            </div>
+            <div class="summary-row">
+              <span data-en="Duration">المدة</span>
+              <strong id="summaryDuration"></strong>
+            </div>
+            <div class="summary-row" id="summaryDateRow" style="display:none;">
+              <span data-en="Date">التاريخ</span>
+              <strong id="summaryDate"></strong>
+            </div>
+            <div class="summary-row" id="summaryTimeRow" style="display:none;">
+              <span data-en="Time">الوقت</span>
+              <strong id="summaryTime"></strong>
+            </div>
+            <div class="summary-row" id="summaryFormatRow" style="display:none;">
+              <span data-en="Format">الصيغة</span>
+              <strong id="summaryFormat"></strong>
+            </div>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-total">
+            <span data-en="Total">الإجمالي</span>
+            <strong id="summaryPrice"></strong>
+          </div>
+          <p class="summary-note" data-en="Secure payment via Tap. You'll receive confirmation by email and WhatsApp.">
+            دفع آمن عبر Tap. ستصلك رسالة تأكيد بالبريد والواتساب.
+          </p>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <div data-en="© 2026 Cash Clinic. All rights reserved.">© 2026 Cash Clinic. جميع الحقوق محفوظة.</div>
+      <div class="social-links">
+        <a href="https://instagram.com/cash.clinc" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+        </a>
+        <a href="mailto:contact@cashclinic.net" aria-label="Email">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </a>
+        <a href="tel:+96522260820" aria-label="Phone">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/packages.js?v=8"></script>
+<script src="assets/js/main.js?v=8"></script>
+<script src="assets/js/booking.js?v=8"></script>
+</body>
+</html>

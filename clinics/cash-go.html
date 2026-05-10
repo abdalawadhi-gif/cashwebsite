@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&amp;family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="../assets/css/style.css?v=7" rel="stylesheet"/>
+<link href="../assets/css/style.css?v=8" rel="stylesheet"/>
 </head>
 <body>
 <header class="site-header">
@@ -64,7 +64,7 @@
 <h2 class="sub-section-title" data-en="The Six Packages">الباقات الستة</h2>
 <p class="sub-section-desc" data-en="Each trip has a package. Choose what fits your trip type and situation.">كل رحلة لها باقة. اختر الباقة اللي تناسب نوع رحلتك ووضعك.</p>
 <div class="packages-grid">
-<article class="package-card">
+<article class="package-card" data-pkg-id="go-medical-companion">
 <div class="pkg-tag" data-en="1 • Sanad" style="color:#C44;">١ • سند</div>
 <h3 class="pkg-name" data-en="Medical Companion">المرافق الطبي</h3>
 <p class="pkg-desc" data-en="For companions of patients traveling for treatment outside Kuwait. Precise medical-trip organization to reduce logistical and emotional stress.">لمرافقي المرضى المسافرين للعلاج خارج الكويت. تنظيم رحلة علاجية دقيقة لتقليل الضغط اللوجستي والنفسي.</p>
@@ -78,10 +78,10 @@
 <div class="pkg-meta" data-en="⏱ 60 min"><span data-en="⏱ 60 min">⏱ ٦٠ دقيقة</span></div>
 <div class="pkg-foot">
 <div class="pkg-price"><span class="num">65+</span><span class="unit" data-en="KWD / +25 per extra country">د.ك / +٢٥ لكل دولة إضافية</span></div>
-<a class="pkg-book" data-en="Book Now" href="#book">احجز الآن</a>
+<a class="pkg-book" data-en="Book Now" href="../book.html?p=go-medical-companion">احجز الآن</a>
 </div>
 </article>
-<article class="package-card featured">
+<article class="package-card featured" data-pkg-id="go-honeymoon">
 <div class="pkg-tag" data-en="2 • Al-Omr" style="color:#D63384;">٢ • العمر</div>
 <h3 class="pkg-name" data-en="Premium Honeymoon">شهر العسل Premium</h3>
 <p class="pkg-desc" data-en="For newlyweds. A complete romantic experience fully customized to reflect both spouses' personalities.">للأزواج الجدد. تجربة رومانسية متكاملة ومخصصة بالكامل تعكس شخصيات الزوجين.</p>
@@ -95,10 +95,10 @@
 <div class="pkg-meta"><span data-en="⏱ 60 min">⏱ ٦٠ دقيقة</span><span data-en="📅 1 week">📅 أسبوع</span></div>
 <div class="pkg-foot">
 <div class="pkg-price"><span class="num">45</span><span class="unit" data-en="KWD / week · +20 per extra week/country">د.ك / أسبوع · +٢٠ لكل أسبوع/دولة</span></div>
-<a class="pkg-book" data-en="Book Now" href="#book">احجز الآن</a>
+<a class="pkg-book" data-en="Book Now" href="../book.html?p=go-honeymoon">احجز الآن</a>
 </div>
 </article>
-<article class="package-card">
+<article class="package-card" data-pkg-id="go-solo-traveler">
 <div class="pkg-tag" data-en="3 • Hurriyah" style="color:var(--blue);">٣ • حرية</div>
 <h3 class="pkg-name" data-en="Solo Traveler">المسافر المنفرد</h3>
 <p class="pkg-desc" data-en="For first-time solo travelers. A safe, organized, flexible and unrestricted experience.">للمسافرين لأول مرة بمفردهم. تجربة آمنة، منظمة، مرنة وغير مقيدة.</p>
@@ -111,10 +111,10 @@
 <div class="pkg-meta"><span data-en="⏱ 60 min">⏱ ٦٠ دقيقة</span><span data-en="📅 1 week">📅 أسبوع</span></div>
 <div class="pkg-foot">
 <div class="pkg-price"><span class="num">30</span><span class="unit" data-en="KWD / week · +20 per extra week/country">د.ك / أسبوع · +٢٠ لكل أسبوع/دولة</span></div>
-<a class="pkg-book" data-en="Book Now" href="#book">احجز الآن</a>
+<a class="pkg-book" data-en="Book Now" href="../book.html?p=go-solo-traveler">احجز الآن</a>
 </div>
 </article>
-<article class="package-card">
+<article class="package-card" data-pkg-id="go-family">
 <div class="pkg-tag" data-en="4 • Lammah" style="color:var(--orange);">٤ • لمّة</div>
 <h3 class="pkg-name" data-en="Family United">العائلة الموحدة</h3>
 <p class="pkg-desc" data-en="For families with kids or multiple ages. A unified balanced program that satisfies everyone.">للعائلات لديها أطفال أو أعمار متعددة. برنامج موحد متوازن يرضي الجميع.</p>
@@ -127,10 +127,10 @@
 <div class="pkg-meta"><span data-en="⏱ 60 min">⏱ ٦٠ دقيقة</span><span data-en="📅 10 days">📅 ١٠ أيام</span></div>
 <div class="pkg-foot">
 <div class="pkg-price"><span class="num">50</span><span class="unit" data-en="KWD · +20 per extra week/country">د.ك · +٢٠ لكل أسبوع/دولة</span></div>
-<a class="pkg-book" data-en="Book Now" href="#book">احجز الآن</a>
+<a class="pkg-book" data-en="Book Now" href="../book.html?p=go-family">احجز الآن</a>
 </div>
 </article>
-<article class="package-card">
+<article class="package-card" data-pkg-id="go-girls-group">
 <div class="pkg-tag" data-en="5 • Banat W Bas" style="color:#D63384;">٥ • بنات وبس</div>
 <h3 class="pkg-name" data-en="Group Trip">رحلة المجموعة</h3>
 <p class="pkg-desc" data-en="For groups of friends or sisters. A social, safe experience full of shareable moments.">لمجموعات الصديقات أو الأخوات. تجربة اجتماعية، آمنة، ومليئة بالتجارب القابلة للمشاركة.</p>
@@ -142,10 +142,10 @@
 <div class="pkg-meta" data-en="⏱ 60 min"><span data-en="⏱ 60 min">⏱ ٦٠ دقيقة</span></div>
 <div class="pkg-foot">
 <div class="pkg-price"><span class="num">45</span><span class="unit" data-en="KWD · +20 per extra week/country">د.ك · +٢٠ لكل أسبوع/دولة</span></div>
-<a class="pkg-book" data-en="Book Now" href="#book">احجز الآن</a>
+<a class="pkg-book" data-en="Book Now" href="../book.html?p=go-girls-group">احجز الآن</a>
 </div>
 </article>
-<article class="package-card">
+<article class="package-card" data-pkg-id="go-adventure">
 <div class="pkg-tag" data-en="6 • Al-Rab'a" style="color:#1F8B4E;">٦ • الربع</div>
 <h3 class="pkg-name" data-en="Adventure Group">المجموعة المغامرة</h3>
 <p class="pkg-desc" data-en="For groups of friends and young people seeking activity and movement. A practical group experience combining adventure with ease of execution.">لمجموعات الأصدقاء والشباب الباحثين عن نشاط وحركة. تجربة جماعية عملية تجمع بين المغامرة وسهولة التنفيذ.</p>
@@ -157,7 +157,7 @@
 <div class="pkg-meta" data-en="⏱ 60 min"><span data-en="⏱ 60 min">⏱ ٦٠ دقيقة</span></div>
 <div class="pkg-foot">
 <div class="pkg-price"><span class="num">35</span><span class="unit" data-en="KWD · +20 per extra week/country">د.ك · +٢٠ لكل أسبوع/دولة</span></div>
-<a class="pkg-book" data-en="Book Now" href="#book">احجز الآن</a>
+<a class="pkg-book" data-en="Book Now" href="../book.html?p=go-adventure">احجز الآن</a>
 </div>
 </article>
 </div>
@@ -238,6 +238,6 @@
 </div>
 </div>
 </footer>
-<script src="../assets/js/main.js?v=7"></script>
+<script src="../assets/js/main.js?v=8"></script>
 </body>
 </html>

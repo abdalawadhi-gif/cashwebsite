@@ -110,24 +110,9 @@
   const waLink = (text) =>
     `https://wa.me/${PHONE}?text=${encodeURIComponent(GREETING + text)}`;
 
-  // 1. Wire each package "احجز الآن" to WhatsApp with package details
-  document.querySelectorAll('.pkg-book').forEach(btn => {
-    const card = btn.closest('.package-card');
-    if (!card) return;
-    const tag = card.querySelector('.pkg-tag')?.textContent?.trim() || '';
-    const name = card.querySelector('.pkg-name')?.textContent?.trim() || '';
-    const priceNum = card.querySelector('.pkg-price .num')?.textContent?.trim() || '';
-    const priceUnit = card.querySelector('.pkg-price .unit')?.textContent?.trim() || '';
-
-    let msg = 'أريد حجز ';
-    if (tag) msg += tag;
-    if (name) msg += (tag ? ' — ' : '') + name;
-    if (priceNum) msg += ` (${priceNum} ${priceUnit})`;
-
-    btn.href = waLink(msg);
-    btn.target = '_blank';
-    btn.rel = 'noopener';
-  });
+  // 1. Package book buttons go directly to the booking page (no WhatsApp redirect)
+  //    The book buttons have href="book.html?p=<pkg-id>" set in the HTML.
+  //    Users can still use WhatsApp via the floating FAB, footer icon, or CTAs.
 
   // 2. Upgrade any existing wa.me links to include the prefilled greeting message
   document.querySelectorAll('a[href^="https://wa.me/"]').forEach(a => {
