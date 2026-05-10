@@ -865,3 +865,63 @@ p { color: var(--ink-2); }
   font-size: 18px;
   line-height: 1.4;
 }
+
+/* ─── WhatsApp floating button & social icon ─────────────── */
+.wa-fab {
+  position: fixed;
+  bottom: 22px;
+  inset-inline-end: 22px;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #25D366;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 22px rgba(37,211,102,0.45), 0 4px 10px rgba(0,0,0,0.12);
+  z-index: 200;
+  transition: transform .25s, box-shadow .25s;
+}
+.wa-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 28px rgba(37,211,102,0.55), 0 6px 14px rgba(0,0,0,0.18);
+}
+.wa-fab svg {
+  width: 30px;
+  height: 30px;
+  fill: #FFFFFF;
+}
+.wa-fab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #25D366;
+  z-index: -1;
+  animation: wa-pulse 2.5s ease-out infinite;
+}
+@keyframes wa-pulse {
+  0%   { transform: scale(1);   opacity: 0.55; }
+  100% { transform: scale(1.7); opacity: 0;    }
+}
+@media (max-width: 600px) {
+  .wa-fab {
+    bottom: 16px;
+    inset-inline-end: 16px;
+    width: 52px;
+    height: 52px;
+  }
+  .wa-fab svg { width: 26px; height: 26px; }
+}
+
+.social-links .wa-social:hover {
+  background: #25D366;
+  color: #FFFFFF;
+  transform: translateY(-2px);
+}
+.social-links .wa-social svg {
+  fill: currentColor;
+  width: 18px;
+  height: 18px;
+}
