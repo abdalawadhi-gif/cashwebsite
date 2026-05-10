@@ -25,7 +25,7 @@
   });
 })();
 
-/* Language toggle */
+/* Language toggle — swaps text and attributes via data-en / data-en-{attr} */
 (function setupLanguageToggle(){
   const btn = document.getElementById('langToggle');
   if (!btn) return;
@@ -37,7 +37,36 @@
     html.lang = lang;
     html.dir = lang === 'ar' ? 'rtl' : 'ltr';
     btn.textContent = lang === 'ar' ? 'EN' : 'ع';
+    btn.setAttribute('aria-label', lang === 'ar' ? 'Switch to English' : 'التبديل إلى العربية');
     localStorage.setItem('lang', lang);
+
+    // Swap inner HTML for elements with data-en — but NEVER touch structural elements
+    document.querySelectorAll('[data-en]').forEach(el => {
+      const tag = el.tagName.toLowerCase();
+      if (tag === 'head' || tag === 'html' || tag === 'body') return; // safety
+      if (!el.hasAttribute('data-ar')) {
+        el.setAttribute('data-ar', el.innerHTML.trim());
+      }
+      el.innerHTML = lang === 'en'
+        ? el.getAttribute('data-en')
+        : el.getAttribute('data-ar');
+    });
+
+    // Swap attributes for elements with data-en-{attr}
+    document.querySelectorAll('*').forEach(el => {
+      Array.from(el.attributes).forEach(attr => {
+        const m = attr.name.match(/^data-en-(.+)$/);
+        if (!m) return;
+        const targetAttr = m[1];
+        const arKey = `data-ar-${targetAttr}`;
+        if (!el.hasAttribute(arKey)) {
+          el.setAttribute(arKey, el.getAttribute(targetAttr) || '');
+        }
+        el.setAttribute(targetAttr, lang === 'en'
+          ? attr.value
+          : el.getAttribute(arKey));
+      });
+    });
   };
   apply(current);
   btn.addEventListener('click', () => apply(current === 'ar' ? 'en' : 'ar'));
