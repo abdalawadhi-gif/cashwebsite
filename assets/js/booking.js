@@ -33,6 +33,8 @@ import {
     step: 1,
     workingHours: null,
     bookedSlots: {},
+    blackouts: {},      // { 'YYYY-MM-DD': [{allDay, timeStart, timeEnd}] }
+    extraSlots: {},     // { 'YYYY-MM-DD': [{timeStart, timeEnd}] }
   };
 
   // ────────────── Fetch consultant config from Firestore ──────────────
@@ -175,7 +177,7 @@ import {
         state.date = d;
         state.time = null;
         renderCalendar();
-        await fetchBookedSlots(d);
+        await fetchAvailability(d);
         renderTimeSlots();
         renderSummary();
         validateStep1();
@@ -183,27 +185,62 @@ import {
     });
   }
 
-  // ────────────── Fetch real booked slots from Firestore ──────────────
-  async function fetchBookedSlots(d) {
+  // ────────────── Fetch real availability data from Firestore ──────────────
+  // Loads: existing bookings, blackouts, and extra slots — all for one specific date
+  async function fetchAvailability(d) {
     const dayKey = isoDate(d);
-    if (state.bookedSlots[dayKey]) return;
+    if (state.bookedSlots[dayKey]) return; // cached
+
+    state.bookedSlots[dayKey] = new Set();
+    state.blackouts[dayKey] = [];   // [{allDay, timeStart, timeEnd}]
+    state.extraSlots[dayKey] = [];  // [{timeStart, timeEnd}]
+
     try {
-      const q = query(
+      // Bookings already taken
+      const bq = query(
         collection(db, 'bookings'),
         where('consultantId', '==', consultantId),
         where('date', '==', dayKey)
       );
-      const snap = await getDocs(q);
-      const taken = new Set();
-      snap.forEach(docSnap => {
+      const bSnap = await getDocs(bq);
+      bSnap.forEach(docSnap => {
         const data = docSnap.data();
         if (data.status === 'cancelled') return;
-        if (data.time) taken.add(data.time);
+        if (data.time) state.bookedSlots[dayKey].add(data.time);
       });
-      state.bookedSlots[dayKey] = taken;
+
+      // Blackouts for this date
+      const blq = query(
+        collection(db, 'blackouts'),
+        where('consultantId', '==', consultantId),
+        where('date', '==', dayKey)
+      );
+      const blSnap = await getDocs(blq);
+      blSnap.forEach(docSnap => {
+        const data = docSnap.data();
+        state.blackouts[dayKey].push({
+          allDay: !!data.allDay,
+          timeStart: data.timeStart,
+          timeEnd: data.timeEnd,
+        });
+      });
+
+      // Extra slots for this date
+      const eq = query(
+        collection(db, 'extraSlots'),
+        where('consultantId', '==', consultantId),
+        where('date', '==', dayKey)
+      );
+      const eSnap = await getDocs(eq);
+      eSnap.forEach(docSnap => {
+        const data = docSnap.data();
+        state.extraSlots[dayKey].push({
+          timeStart: data.timeStart,
+          timeEnd: data.timeEnd,
+        });
+      });
     } catch (e) {
-      console.warn('Could not load booked slots:', e);
-      state.bookedSlots[dayKey] = new Set();
+      console.warn('Could not load availability:', e);
     }
   }
 
@@ -215,32 +252,58 @@ import {
     document.getElementById('selectedDateLabel').textContent = formatDate(state.date);
 
     const dayKey = DOW_KEYS[state.date.getDay()];
+    const dateKey = isoDate(state.date);
     const workSlots = state.workingHours[dayKey] || [];
     const durationMin = state.pkg.duration;
     const stepMin = 30;
 
-    const allSlots = [];
-    for (const win of workSlots) {
-      const [sh, sm] = win.start.split(':').map(Number);
-      const [eh, em] = win.end.split(':').map(Number);
-      const startMin = sh*60+sm, endMin = eh*60+em;
-      for (let t = startMin; t + durationMin <= endMin; t += stepMin) {
-        const hh = String(Math.floor(t/60)).padStart(2,'0');
-        const mm = String(t%60).padStart(2,'0');
-        allSlots.push(`${hh}:${mm}`);
+    // Check for all-day blackout
+    const blackouts = state.blackouts[dateKey] || [];
+    const allDayBlock = blackouts.some(b => b.allDay);
+    const partialBlackouts = blackouts.filter(b => !b.allDay);
+
+    // Combine working hours windows with extra slots for this date
+    let availableWindows = allDayBlock ? [] : [...workSlots];
+    const extras = state.extraSlots[dateKey] || [];
+    for (const ex of extras) {
+      if (ex.timeStart && ex.timeEnd) {
+        availableWindows.push({ start: ex.timeStart, end: ex.timeEnd });
       }
     }
 
-    const dateKey = isoDate(state.date);
+    // Generate slots from all available windows
+    const allSlots = new Set();
+    for (const win of availableWindows) {
+      const [sh, sm] = win.start.split(':').map(Number);
+      const [eh, em] = win.end.split(':').map(Number);
+      const startMin = sh * 60 + sm, endMin = eh * 60 + em;
+      for (let t = startMin; t + durationMin <= endMin; t += stepMin) {
+        const hh = String(Math.floor(t / 60)).padStart(2, '0');
+        const mm = String(t % 60).padStart(2, '0');
+        const slot = `${hh}:${mm}`;
+        // Skip if this slot falls inside a partial blackout
+        const slotEndMin = t + durationMin;
+        const blockedByPartial = partialBlackouts.some(b => {
+          if (!b.timeStart || !b.timeEnd) return false;
+          const [bsH, bsM] = b.timeStart.split(':').map(Number);
+          const [beH, beM] = b.timeEnd.split(':').map(Number);
+          const bStart = bsH * 60 + bsM, bEnd = beH * 60 + beM;
+          return t < bEnd && slotEndMin > bStart; // overlap
+        });
+        if (!blockedByPartial) allSlots.add(slot);
+      }
+    }
+
+    const sortedSlots = [...allSlots].sort();
     const taken = state.bookedSlots[dateKey] || new Set();
 
     const container = document.getElementById('timeSlots');
-    if (allSlots.length === 0) {
+    if (sortedSlots.length === 0) {
       container.innerHTML = `<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--ink-2);font-size:14px">${lang()==='en'?'No slots available this day.':'لا توجد مواعيد متاحة هذا اليوم.'}</div>`;
       return;
     }
 
-    container.innerHTML = allSlots.map(s => {
+    container.innerHTML = sortedSlots.map(s => {
       const isBooked = taken.has(s);
       const isSelected = state.time === s;
       let cls = 'time-slot';

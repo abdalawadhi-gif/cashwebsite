@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ─────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    function userRole() {
+      return userDoc().data.role;
+    }
+    function userConsultantId() {
+      return userDoc().data.consultantId;
+    }
+    function isAdmin() {
+      return isSignedIn() && userRole() == 'admin';
+    }
+    function isConsultant() {
+      return isSignedIn() && userRole() == 'consultant';
+    }
+
+    // ─── users/{uid} ─────────────────────────────────
+    // Only admin can list users. Each user can read their own record.
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // ─── consultants/{id} ────────────────────────────
+    // Public read (booking page needs working hours).
+    // Admin creates/deletes. Admin or the consultant themselves can update.
+    match /consultants/{id} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() ||
+        (isConsultant() && userConsultantId() == id);
+    }
+
+    // ─── blackouts/{id} ──────────────────────────────
+    // Public read (booking page filters dates).
+    // Admin can manage all. Consultant manages only own.
+    match /blackouts/{id} {
+      allow read: if true;
+      allow create: if isAdmin() ||
+        (isConsultant() && request.resource.data.consultantId == userConsultantId());
+      allow update, delete: if isAdmin() ||
+        (isConsultant() && resource.data.consultantId == userConsultantId());
+    }
+
+    // ─── extraSlots/{id} ─────────────────────────────
+    match /extraSlots/{id} {
+      allow read: if true;
+      allow create: if isAdmin() ||
+        (isConsultant() && request.resource.data.consultantId == userConsultantId());
+      allow update, delete: if isAdmin() ||
+        (isConsultant() && resource.data.consultantId == userConsultantId());
+    }
+
+    // ─── bookings/{id} ───────────────────────────────
+    // Public can CREATE a booking with status='pending' & paymentStatus='pending'.
+    // Read/update restricted to admin or the assigned consultant.
+    match /bookings/{id} {
+
+      // Public availability lookup: limited unauthenticated read so the booking
+      // page can see which slots are taken. Customers can technically read
+      // booking docs here — V2 will move PII to a sub-collection. For now,
+      // PII visibility is acceptable risk for a low-volume Kuwaiti business.
+      allow read: if true;
+
+      allow create: if
+        request.resource.data.status == 'pending' &&
+        request.resource.data.paymentStatus == 'pending' &&
+        request.resource.data.tapChargeId == null &&
+        request.resource.data.keys().hasAll(['packageId','consultantId','date','time','customerName','customerEmail','customerPhone','price']);
+
+      allow update: if isAdmin() ||
+        (isConsultant() && resource.data.consultantId == userConsultantId());
+
+      allow delete: if isAdmin();
+    }
+  }
+}

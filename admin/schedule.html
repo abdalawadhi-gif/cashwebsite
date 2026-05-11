@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#0E1530"/>
+<meta name="robots" content="noindex"/>
+<title>Schedule — Cash Clinic Admin</title>
+<link href="../assets/img/cashclinic-logo.jpg" rel="icon" type="image/jpeg"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="../assets/css/style.css?v=11" rel="stylesheet"/>
+<link href="../assets/css/admin.css?v=11" rel="stylesheet"/>
+</head>
+<body>
+
+<div class="admin-shell">
+
+  <header class="admin-header">
+    <div class="container">
+      <a class="admin-brand" href="index.html">
+        <img src="../assets/img/cashclinic-logo.jpg" alt="Cash Clinic"/>
+        <span>Cash Clinic</span>
+        <span class="admin-tag">Admin</span>
+      </a>
+      <div class="admin-user">
+        <span class="who">Signed in as <strong id="userName">…</strong> <span id="userRole" style="opacity:.7"></span></span>
+        <button class="admin-logout" id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-content">
+    <div class="container">
+
+      <div class="admin-nav">
+        <a href="index.html">Bookings</a>
+        <a href="schedule.html" class="active">Schedule</a>
+      </div>
+
+      <h1 class="admin-page-title">Manage Schedule</h1>
+      <p class="admin-page-lede">Set working hours, block out dates, and open extra availability.</p>
+
+      <!-- Consultant picker (admin only) -->
+      <div class="consultant-picker" id="consultantPicker" style="display:none">
+        <label for="consultantSel">Editing schedule for:</label>
+        <select id="consultantSel">
+          <option value="ghaliya">Ghaliya Al-Nuwaif (Cash Nas)</option>
+          <option value="sara">Sara Al-Hindi (Cash Gold)</option>
+          <option value="hasan">Hasan Al-Shihri (Cash Riyada)</option>
+          <option value="amina">Amina Al-Khalifa (Cash Go)</option>
+        </select>
+      </div>
+
+      <!-- Loading -->
+      <div id="loadingMsg" style="text-align:center;padding:40px;color:var(--ink-2);">Loading schedule…</div>
+
+      <!-- Schedule content -->
+      <div id="scheduleContent" style="display:none">
+
+        <div class="schedule-grid">
+
+          <!-- Weekly hours card -->
+          <div class="sched-card" style="grid-column:1/-1">
+            <h2>Weekly working hours</h2>
+            <p class="lede">Set the regular hours for each day. Switch a day off if you don't work that day.</p>
+
+            <div class="day-rows" id="dayRows"></div>
+
+            <div class="save-row">
+              <span class="save-status" id="hoursStatus"></span>
+              <button class="btn-save" id="saveHoursBtn">Save hours</button>
+            </div>
+          </div>
+
+          <!-- Blackouts card -->
+          <div class="sched-card">
+            <h2>Blackout dates</h2>
+            <p class="lede">Block specific days (vacation, sick, holiday). You can block the whole day or just a time range.</p>
+
+            <div class="add-form">
+              <div class="row">
+                <div>
+                  <label for="boDate">Date</label>
+                  <input type="date" id="boDate"/>
+                </div>
+                <div>
+                  <label for="boReason">Reason (optional)</label>
+                  <input type="text" id="boReason" placeholder="Vacation, sick day…"/>
+                </div>
+                <button class="btn-mini-gold" id="boAddBtn">+ Block this day</button>
+              </div>
+              <label class="full-day-toggle">
+                <input type="checkbox" id="boAllDay" checked/>
+                Block all day
+              </label>
+              <div class="row" id="boTimeRow" style="display:none;margin-top:8px;">
+                <div>
+                  <label for="boStart">From</label>
+                  <input type="time" id="boStart" value="09:00"/>
+                </div>
+                <div>
+                  <label for="boEnd">To</label>
+                  <input type="time" id="boEnd" value="12:00"/>
+                </div>
+                <div></div>
+              </div>
+            </div>
+
+            <div class="entry-list" id="blackoutList"></div>
+          </div>
+
+          <!-- Extra slots card -->
+          <div class="sched-card">
+            <h2>Extra available slots</h2>
+            <p class="lede">Open availability outside the normal hours — a one-off evening, weekend, etc.</p>
+
+            <div class="add-form">
+              <div class="row">
+                <div>
+                  <label for="exDate">Date</label>
+                  <input type="date" id="exDate"/>
+                </div>
+                <div>
+                  <label for="exStart">From</label>
+                  <input type="time" id="exStart" value="18:00"/>
+                </div>
+                <button class="btn-mini-gold" id="exAddBtn">+ Add slot</button>
+              </div>
+              <div class="row" style="margin-top:8px;">
+                <div>
+                  <label for="exEnd">To</label>
+                  <input type="time" id="exEnd" value="21:00"/>
+                </div>
+                <div></div>
+                <div></div>
+              </div>
+            </div>
+
+            <div class="entry-list" id="extraList"></div>
+          </div>
+
+          <!-- Settings card -->
+          <div class="sched-card" style="grid-column:1/-1">
+            <h2>Settings</h2>
+            <p class="lede">Buffer time between sessions, and how far in advance customers can book.</p>
+
+            <div class="settings-row">
+              <div class="field">
+                <label for="bufferMin">Buffer between sessions (minutes)</label>
+                <input type="number" id="bufferMin" min="0" max="60" step="5"/>
+              </div>
+              <div class="field">
+                <label for="horizonDays">Booking horizon (days ahead)</label>
+                <input type="number" id="horizonDays" min="1" max="365" step="1"/>
+              </div>
+            </div>
+
+            <div class="save-row">
+              <span class="save-status" id="settingsStatus"></span>
+              <button class="btn-save" id="saveSettingsBtn">Save settings</button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import {
+  db, auth, requireAuth, signOut,
+  collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
+  query, where, serverTimestamp
+} from '../assets/js/firebase-config.js?v=11';
+
+const DAYS = [
+  { key: 'sun', label: 'Sunday' },
+  { key: 'mon', label: 'Monday' },
+  { key: 'tue', label: 'Tuesday' },
+  { key: 'wed', label: 'Wednesday' },
+  { key: 'thu', label: 'Thursday' },
+  { key: 'fri', label: 'Friday' },
+  { key: 'sat', label: 'Saturday' },
+];
+
+const CONSULTANT_NAMES = {
+  ghaliya: 'Ghaliya Al-Nuwaif',
+  sara: 'Sara Al-Hindi',
+  hasan: 'Hasan Al-Shihri',
+  amina: 'Amina Al-Khalifa',
+};
+
+let me = null;
+let selectedId = null;
+let consultantData = null;
+
+(async () => {
+  me = await requireAuth('login.html');
+  if (!me) return;
+
+  document.getElementById('userName').textContent = me.user.email;
+  document.getElementById('userRole').textContent = '· ' + (me.role === 'admin' ? 'Admin' : 'Consultant');
+
+  if (me.role === 'admin') {
+    document.getElementById('consultantPicker').style.display = '';
+    selectedId = 'ghaliya';
+    document.getElementById('consultantSel').value = selectedId;
+    document.getElementById('consultantSel').addEventListener('change', e => {
+      selectedId = e.target.value;
+      loadAll();
+    });
+  } else if (me.role === 'consultant') {
+    selectedId = me.consultantId;
+  } else {
+    alert('Unknown role');
+    return;
+  }
+
+  await loadAll();
+})();
+
+async function loadAll() {
+  document.getElementById('loadingMsg').style.display = '';
+  document.getElementById('scheduleContent').style.display = 'none';
+  try {
+    const snap = await getDoc(doc(db, 'consultants', selectedId));
+    if (!snap.exists()) {
+      document.getElementById('loadingMsg').innerHTML = '⚠️ Consultant record not found. Run <a href="setup.html">setup</a> first.';
+      return;
+    }
+    consultantData = { id: snap.id, ...snap.data() };
+    renderHours();
+    document.getElementById('bufferMin').value = consultantData.bufferMinutes ?? 0;
+    document.getElementById('horizonDays').value = consultantData.bookingHorizonDays ?? 30;
+    await loadBlackouts();
+    await loadExtraSlots();
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('scheduleContent').style.display = '';
+  } catch (err) {
+    console.error(err);
+    document.getElementById('loadingMsg').innerHTML = '⚠️ Error loading: ' + err.message;
+  }
+}
+
+// ─── Weekly hours ───
+function renderHours() {
+  const wh = consultantData.workingHours || {};
+  const container = document.getElementById('dayRows');
+  container.innerHTML = DAYS.map(d => {
+    const slots = wh[d.key] || [];
+    const enabled = slots.length > 0;
+    const start = enabled ? slots[0].start : '09:00';
+    const end = enabled ? slots[0].end : '18:00';
+    return `
+      <div class="day-row ${enabled ? '' : 'disabled'}" data-day="${d.key}">
+        <span class="day-name">${d.label}</span>
+        <label class="toggle">
+          <input type="checkbox" data-toggle ${enabled ? 'checked' : ''}/>
+          <span class="slider"></span>
+        </label>
+        <input type="time" data-start value="${start}" ${enabled ? '' : 'disabled'}/>
+        <input type="time" data-end value="${end}" ${enabled ? '' : 'disabled'}/>
+      </div>`;
+  }).join('');
+
+  container.querySelectorAll('.day-row').forEach(row => {
+    const toggle = row.querySelector('[data-toggle]');
+    toggle.addEventListener('change', () => {
+      row.classList.toggle('disabled', !toggle.checked);
+      row.querySelector('[data-start]').disabled = !toggle.checked;
+      row.querySelector('[data-end]').disabled = !toggle.checked;
+    });
+  });
+}
+
+document.getElementById('saveHoursBtn').addEventListener('click', async () => {
+  const status = document.getElementById('hoursStatus');
+  const btn = document.getElementById('saveHoursBtn');
+  btn.disabled = true;
+  status.textContent = 'Saving…';
+  status.className = 'save-status';
+
+  const wh = {};
+  document.querySelectorAll('#dayRows .day-row').forEach(row => {
+    const key = row.dataset.day;
+    const enabled = row.querySelector('[data-toggle]').checked;
+    if (!enabled) { wh[key] = []; return; }
+    const start = row.querySelector('[data-start]').value;
+    const end = row.querySelector('[data-end]').value;
+    if (!start || !end || start >= end) {
+      wh[key] = [];
+    } else {
+      wh[key] = [{ start, end }];
+    }
+  });
+
+  try {
+    await updateDoc(doc(db, 'consultants', selectedId), { workingHours: wh });
+    consultantData.workingHours = wh;
+    status.textContent = '✓ Saved';
+    status.className = 'save-status ok';
+    setTimeout(() => { status.textContent = ''; }, 2500);
+  } catch (err) {
+    status.textContent = '⚠️ ' + (err.message || err);
+    status.className = 'save-status err';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ─── Blackouts ───
+const boAllDayChk = document.getElementById('boAllDay');
+const boTimeRow = document.getElementById('boTimeRow');
+boAllDayChk.addEventListener('change', () => {
+  boTimeRow.style.display = boAllDayChk.checked ? 'none' : '';
+});
+
+async function loadBlackouts() {
+  const list = document.getElementById('blackoutList');
+  list.innerHTML = '<div class="entry-empty">Loading…</div>';
+  try {
+    const q = query(collection(db, 'blackouts'), where('consultantId', '==', selectedId));
+    const snap = await getDocs(q);
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+    if (items.length === 0) {
+      list.innerHTML = '<div class="entry-empty">No blackout dates yet.</div>';
+      return;
+    }
+    list.innerHTML = items.map(b => `
+      <div class="entry-item">
+        <div>
+          <div class="when">${formatDate(b.date)}${b.allDay ? ' · All day' : ` · ${b.timeStart}–${b.timeEnd}`}</div>
+          ${b.reason ? `<div class="reason">${esc(b.reason)}</div>` : ''}
+        </div>
+        <button class="delete" data-id="${b.id}" title="Remove">×</button>
+      </div>
+    `).join('');
+    list.querySelectorAll('button.delete').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Remove this blackout?')) return;
+        await deleteDoc(doc(db, 'blackouts', btn.dataset.id));
+        loadBlackouts();
+      });
+    });
+  } catch (err) {
+    list.innerHTML = '<div class="entry-empty">⚠️ ' + err.message + '</div>';
+  }
+}
+
+document.getElementById('boAddBtn').addEventListener('click', async () => {
+  const dateEl = document.getElementById('boDate');
+  const date = dateEl.value;
+  if (!date) { dateEl.focus(); return; }
+  const allDay = boAllDayChk.checked;
+  const reason = document.getElementById('boReason').value.trim();
+  const data = {
+    consultantId: selectedId,
+    date,
+    allDay,
+    reason,
+    createdAt: serverTimestamp(),
+  };
+  if (!allDay) {
+    data.timeStart = document.getElementById('boStart').value;
+    data.timeEnd = document.getElementById('boEnd').value;
+    if (!data.timeStart || !data.timeEnd || data.timeStart >= data.timeEnd) {
+      alert('Please pick a valid time range.');
+      return;
+    }
+  }
+  const btn = document.getElementById('boAddBtn');
+  btn.disabled = true;
+  try {
+    await addDoc(collection(db, 'blackouts'), data);
+    dateEl.value = '';
+    document.getElementById('boReason').value = '';
+    await loadBlackouts();
+  } catch (err) {
+    alert('Could not add: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ─── Extra slots ───
+async function loadExtraSlots() {
+  const list = document.getElementById('extraList');
+  list.innerHTML = '<div class="entry-empty">Loading…</div>';
+  try {
+    const q = query(collection(db, 'extraSlots'), where('consultantId', '==', selectedId));
+    const snap = await getDocs(q);
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+    if (items.length === 0) {
+      list.innerHTML = '<div class="entry-empty">No extra slots yet.</div>';
+      return;
+    }
+    list.innerHTML = items.map(s => `
+      <div class="entry-item">
+        <div>
+          <div class="when">${formatDate(s.date)} · ${s.timeStart}–${s.timeEnd}</div>
+        </div>
+        <button class="delete" data-id="${s.id}" title="Remove">×</button>
+      </div>
+    `).join('');
+    list.querySelectorAll('button.delete').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Remove this slot?')) return;
+        await deleteDoc(doc(db, 'extraSlots', btn.dataset.id));
+        loadExtraSlots();
+      });
+    });
+  } catch (err) {
+    list.innerHTML = '<div class="entry-empty">⚠️ ' + err.message + '</div>';
+  }
+}
+
+document.getElementById('exAddBtn').addEventListener('click', async () => {
+  const date = document.getElementById('exDate').value;
+  const timeStart = document.getElementById('exStart').value;
+  const timeEnd = document.getElementById('exEnd').value;
+  if (!date || !timeStart || !timeEnd || timeStart >= timeEnd) {
+    alert('Please fill in a valid date and time range.');
+    return;
+  }
+  const btn = document.getElementById('exAddBtn');
+  btn.disabled = true;
+  try {
+    await addDoc(collection(db, 'extraSlots'), {
+      consultantId: selectedId,
+      date, timeStart, timeEnd,
+      createdAt: serverTimestamp(),
+    });
+    document.getElementById('exDate').value = '';
+    await loadExtraSlots();
+  } catch (err) {
+    alert('Could not add: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ─── Settings ───
+document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+  const status = document.getElementById('settingsStatus');
+  const btn = document.getElementById('saveSettingsBtn');
+  btn.disabled = true;
+  status.textContent = 'Saving…';
+  status.className = 'save-status';
+  try {
+    const bufferMinutes = parseInt(document.getElementById('bufferMin').value) || 0;
+    const bookingHorizonDays = parseInt(document.getElementById('horizonDays').value) || 30;
+    await updateDoc(doc(db, 'consultants', selectedId), { bufferMinutes, bookingHorizonDays });
+    status.textContent = '✓ Saved';
+    status.className = 'save-status ok';
+    setTimeout(() => { status.textContent = ''; }, 2500);
+  } catch (err) {
+    status.textContent = '⚠️ ' + err.message;
+    status.className = 'save-status err';
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ─── Utils ───
+function formatDate(s) {
+  if (!s) return '—';
+  const d = new Date(s + 'T00:00:00');
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+}
+function esc(s) { return String(s ?? '').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
+// Logout
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await signOut(auth);
+  location.href = 'login.html';
+});
+</script>
+
+</body>
+</html>

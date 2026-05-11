@@ -10,8 +10,8 @@
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="../assets/css/style.css?v=10" rel="stylesheet"/>
-<link href="../assets/css/admin.css?v=10" rel="stylesheet"/>
+<link href="../assets/css/style.css?v=11" rel="stylesheet"/>
+<link href="../assets/css/admin.css?v=11" rel="stylesheet"/>
 </head>
 <body>
 
@@ -33,6 +33,11 @@
 
   <main class="admin-content">
     <div class="container">
+
+      <div class="admin-nav">
+        <a href="index.html" class="active">Bookings</a>
+        <a href="schedule.html">Schedule</a>
+      </div>
 
       <h1 class="admin-page-title">Dashboard</h1>
       <p class="admin-page-lede" id="pageLede">Loading…</p>
@@ -74,10 +79,6 @@
         </table>
       </section>
 
-      <p style="margin-top:24px; font-size:13px; color:var(--ink-2)">
-        <strong>Tip:</strong> Schedule management (set working hours, block dates, add extra slots) is coming next. For now, the booking page uses placeholder defaults (Sun–Thu 9am–6pm).
-      </p>
-
     </div>
   </main>
 </div>
@@ -86,7 +87,7 @@
 import {
   auth, db, requireAuth, signOut,
   collection, query, where, orderBy, getDocs, onSnapshot
-} from '../assets/js/firebase-config.js?v=10';
+} from '../assets/js/firebase-config.js?v=11';
 
 let currentUser = null;
 let currentFilter = 'upcoming';
