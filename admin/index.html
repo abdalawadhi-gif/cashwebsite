@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#0E1530"/>
+<meta name="robots" content="noindex"/>
+<title>Admin Dashboard — Cash Clinic</title>
+<link href="../assets/img/cashclinic-logo.jpg" rel="icon" type="image/jpeg"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="../assets/css/style.css?v=10" rel="stylesheet"/>
+<link href="../assets/css/admin.css?v=10" rel="stylesheet"/>
+</head>
+<body>
+
+<div class="admin-shell">
+
+  <header class="admin-header">
+    <div class="container">
+      <a class="admin-brand" href="index.html">
+        <img src="../assets/img/cashclinic-logo.jpg" alt="Cash Clinic"/>
+        <span>Cash Clinic</span>
+        <span class="admin-tag">Admin</span>
+      </a>
+      <div class="admin-user">
+        <span class="who">Signed in as <strong id="userName">…</strong> <span id="userRole" style="opacity:.7"></span></span>
+        <button class="admin-logout" id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-content">
+    <div class="container">
+
+      <h1 class="admin-page-title">Dashboard</h1>
+      <p class="admin-page-lede" id="pageLede">Loading…</p>
+
+      <!-- Stats -->
+      <div class="stat-cards" id="statCards">
+        <div class="stat-card"><div class="label">Today</div><div class="value" id="statToday">—</div><div class="delta">bookings</div></div>
+        <div class="stat-card"><div class="label">This Week</div><div class="value" id="statWeek">—</div><div class="delta">bookings</div></div>
+        <div class="stat-card"><div class="label">This Month</div><div class="value" id="statMonth">—</div><div class="delta">bookings</div></div>
+        <div class="stat-card"><div class="label">Revenue (Month)</div><div class="value" id="statRevenue">—</div><div class="delta">KWD paid</div></div>
+      </div>
+
+      <!-- Bookings -->
+      <section class="bookings-section">
+        <h2>
+          <span id="bookingsTitle">All bookings</span>
+          <div class="section-actions">
+            <button class="btn-mini active" data-filter="upcoming">Upcoming</button>
+            <button class="btn-mini" data-filter="today">Today</button>
+            <button class="btn-mini" data-filter="all">All</button>
+          </div>
+        </h2>
+
+        <table class="bookings-table" id="bookingsTable">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Package</th>
+              <th>Consultant</th>
+              <th>Date / Time</th>
+              <th>Format</th>
+              <th>Price</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsBody">
+            <tr><td colspan="7" class="empty-row">Loading bookings…</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <p style="margin-top:24px; font-size:13px; color:var(--ink-2)">
+        <strong>Tip:</strong> Schedule management (set working hours, block dates, add extra slots) is coming next. For now, the booking page uses placeholder defaults (Sun–Thu 9am–6pm).
+      </p>
+
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import {
+  auth, db, requireAuth, signOut,
+  collection, query, where, orderBy, getDocs, onSnapshot
+} from '../assets/js/firebase-config.js?v=10';
+
+let currentUser = null;
+let currentFilter = 'upcoming';
+let allBookings = [];
+
+(async () => {
+  currentUser = await requireAuth('login.html');
+  if (!currentUser) return;
+
+  // Header
+  document.getElementById('userName').textContent = currentUser.email || currentUser.user.email;
+  document.getElementById('userRole').textContent = '· ' + (currentUser.role === 'admin' ? 'Admin' : 'Consultant');
+
+  // Title depends on role
+  if (currentUser.role === 'admin') {
+    document.getElementById('pageLede').textContent = 'You see all bookings across the four clinics.';
+    document.getElementById('bookingsTitle').textContent = 'All bookings';
+  } else {
+    document.getElementById('pageLede').textContent = 'You see only your own bookings.';
+    document.getElementById('bookingsTitle').textContent = 'My bookings';
+  }
+
+  subscribeBookings();
+})();
+
+// Subscribe to bookings in real time
+function subscribeBookings() {
+  const col = collection(db, 'bookings');
+  // Admin sees all; consultant sees only own
+  const q = currentUser.role === 'admin'
+    ? query(col, orderBy('date', 'desc'))
+    : query(col, where('consultantId', '==', currentUser.consultantId), orderBy('date', 'desc'));
+
+  onSnapshot(q,
+    (snapshot) => {
+      allBookings = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderStats();
+      renderBookings();
+    },
+    (err) => {
+      console.error('Bookings subscription error:', err);
+      document.getElementById('bookingsBody').innerHTML =
+        '<tr><td colspan="7" class="empty-row"><div class="icon">⚠️</div>Could not load bookings.<br><small style="color:#991B1B">' + (err.message || err) + '</small></td></tr>';
+    }
+  );
+}
+
+// ────── Stats ──────
+function renderStats() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = today.toISOString().slice(0,10);
+  const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+  const nextMonth = new Date(today.getFullYear(), today.getMonth()+1, 1);
+
+  let todayCount = 0, weekCount = 0, monthCount = 0, monthRevenue = 0;
+  for (const b of allBookings) {
+    if (!b.date) continue;
+    const d = new Date(b.date + 'T00:00:00');
+    if (b.date === todayStr) todayCount++;
+    if (d >= today && d < weekEnd) weekCount++;
+    if (d >= monthStart && d < nextMonth) {
+      monthCount++;
+      if (b.paymentStatus === 'paid') monthRevenue += (b.price || 0);
+    }
+  }
+  document.getElementById('statToday').textContent = todayCount;
+  document.getElementById('statWeek').textContent = weekCount;
+  document.getElementById('statMonth').textContent = monthCount;
+  document.getElementById('statRevenue').textContent = monthRevenue;
+}
+
+// ────── Bookings list ──────
+document.querySelectorAll('[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderBookings();
+  });
+});
+
+function renderBookings() {
+  const body = document.getElementById('bookingsBody');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = today.toISOString().slice(0,10);
+
+  let list = [...allBookings];
+  if (currentFilter === 'upcoming') {
+    list = list.filter(b => b.date && b.date >= todayStr);
+    list.sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''));
+  } else if (currentFilter === 'today') {
+    list = list.filter(b => b.date === todayStr);
+    list.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  } else {
+    list.sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  if (list.length === 0) {
+    body.innerHTML = '<tr><td colspan="7" class="empty-row"><div class="icon">📭</div>No bookings yet.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = list.map(b => `
+    <tr>
+      <td data-label="Customer">
+        <div class="customer-name">${esc(b.customerName || '—')}</div>
+        <div class="customer-sub">${esc(b.customerPhone || '')} · ${esc(b.customerEmail || '')}</div>
+      </td>
+      <td data-label="Package">
+        <div>${esc(b.packageName || b.packageId || '—')}</div>
+        <div class="customer-sub">${esc(b.clinic ? 'Cash ' + b.clinic.charAt(0).toUpperCase() + b.clinic.slice(1) : '')}</div>
+      </td>
+      <td data-label="Consultant">${esc(b.consultantName || b.consultantId || '—')}</td>
+      <td data-label="Date / Time">
+        <div><strong>${formatDate(b.date)}</strong></div>
+        <div class="customer-sub">${esc(b.time || '')}${b.duration ? ' · ' + b.duration + ' min' : ''}</div>
+      </td>
+      <td data-label="Format">${b.format === 'online' ? '💻 Online' : '🏢 In-person'}</td>
+      <td data-label="Price">${b.price || 0} KWD</td>
+      <td data-label="Status">
+        <span class="status-pill status-${esc(b.status || 'pending')}">${esc(b.status || 'pending')}</span>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function formatDate(s) {
+  if (!s) return '—';
+  const d = new Date(s + 'T00:00:00');
+  return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+function esc(s) {
+  return String(s ?? '').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+}
+
+// Logout
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await signOut(auth);
+  location.href = 'login.html';
+});
+</script>
+
+</body>
+</html>

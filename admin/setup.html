@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#0E1530"/>
+<meta name="robots" content="noindex"/>
+<title>First-time Setup — Cash Clinic</title>
+<link href="../assets/img/cashclinic-logo.jpg" rel="icon" type="image/jpeg"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="../assets/css/style.css?v=10" rel="stylesheet"/>
+<link href="../assets/css/admin.css?v=10" rel="stylesheet"/>
+</head>
+<body>
+
+<div class="admin-shell">
+
+  <header class="admin-header">
+    <div class="container">
+      <a class="admin-brand" href="index.html">
+        <img src="../assets/img/cashclinic-logo.jpg" alt="Cash Clinic"/>
+        <span>Cash Clinic</span>
+        <span class="admin-tag">Setup</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="admin-content">
+    <div class="container">
+
+      <div class="setup-card">
+        <h1>First-time setup</h1>
+        <p class="lede">
+          This page creates the 4 consultant records in Firestore with placeholder working hours (Sun–Thu, 9 AM – 6 PM). You only need to run this <strong>once</strong>. After that, you'll edit hours from the admin panel.
+        </p>
+
+        <ul class="setup-list">
+          <li><strong>Ghaliya Al-Nuwaif</strong> · Cash Nas</li>
+          <li><strong>Sara Al-Hindi</strong> · Cash Gold</li>
+          <li><strong>Hasan Al-Shihri</strong> · Cash Riyada</li>
+          <li><strong>Amina Al-Khalifa</strong> · Cash Go</li>
+        </ul>
+
+        <button class="btn-submit" id="seedBtn" style="background:var(--gold);color:var(--ink)">
+          Create the 4 consultant records
+        </button>
+
+        <div id="status" class="setup-status info" style="display:none"></div>
+
+        <p style="margin-top:24px;font-size:13px;color:var(--ink-2)">
+          Already done? <a href="index.html" style="color:var(--blue);font-weight:700">Go to Dashboard →</a>
+        </p>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import {
+  db, requireAuth, doc, setDoc, getDoc, serverTimestamp
+} from '../assets/js/firebase-config.js?v=10';
+
+const me = await requireAuth('login.html');
+if (!me) throw new Error('not signed in');
+if (me.role !== 'admin') {
+  document.querySelector('.setup-card').innerHTML =
+    '<h1>Not authorized</h1><p class="lede">Only the admin can run setup. <a href="index.html" style="color:var(--blue)">Back to dashboard</a></p>';
+  throw new Error('not admin');
+}
+
+const DEFAULT_HOURS = {
+  sun: [{ start: '09:00', end: '18:00' }],
+  mon: [{ start: '09:00', end: '18:00' }],
+  tue: [{ start: '09:00', end: '18:00' }],
+  wed: [{ start: '09:00', end: '18:00' }],
+  thu: [{ start: '09:00', end: '18:00' }],
+  fri: [],
+  sat: [],
+};
+
+const CONSULTANTS = [
+  {
+    id: 'ghaliya',
+    nameAr: 'غالية النويف', nameEn: 'Ghaliya Al-Nuwaif',
+    titleAr: 'مؤسسة ومستشارة مالية', titleEn: 'Founder & Financial Consultant',
+    clinic: 'nas', clinicColor: '#7B2D8B',
+    photo: 'ghaliya.jpg',
+  },
+  {
+    id: 'sara',
+    nameAr: 'ساره الهندي', nameEn: 'Sara Al-Hindi',
+    titleAr: 'مختصة بالأزمات المالية والأهداف', titleEn: 'Financial Crisis & Goals Specialist',
+    clinic: 'gold', clinicColor: '#E8C011',
+    photo: 'sara.jpg',
+  },
+  {
+    id: 'hasan',
+    nameAr: 'حسن الشهري', nameEn: 'Hasan Al-Shihri',
+    titleAr: 'مستشار أعمال ومالي', titleEn: 'Business & Financial Consultant',
+    clinic: 'riyada', clinicColor: '#F5A623',
+    photo: 'hasan.jpg',
+  },
+  {
+    id: 'amina',
+    nameAr: 'أمينة الخليفة', nameEn: 'Amina Al-Khalifa',
+    titleAr: 'مستشارة سفر', titleEn: 'Travel Consultant',
+    clinic: 'go', clinicColor: '#2F7EC7',
+    photo: 'amina.jpg',
+  },
+];
+
+const seedBtn = document.getElementById('seedBtn');
+const statusBox = document.getElementById('status');
+
+seedBtn.addEventListener('click', async () => {
+  seedBtn.disabled = true;
+  seedBtn.textContent = 'Setting up…';
+  statusBox.style.display = '';
+  statusBox.className = 'setup-status info';
+  statusBox.innerHTML = '<div>Working…</div>';
+
+  const log = [];
+  try {
+    for (const c of CONSULTANTS) {
+      const ref = doc(db, 'consultants', c.id);
+      const existing = await getDoc(ref);
+      if (existing.exists()) {
+        log.push(`• ${c.nameEn} — already exists, skipped`);
+        continue;
+      }
+      await setDoc(ref, {
+        ...c,
+        workingHours: DEFAULT_HOURS,
+        bufferMinutes: 0,
+        bookingHorizonDays: 30,
+        active: true,
+        createdAt: serverTimestamp(),
+      });
+      log.push(`✓ ${c.nameEn} — created`);
+    }
+
+    statusBox.className = 'setup-status success';
+    statusBox.innerHTML = '<strong>Done!</strong><br>' + log.join('<br>') +
+      '<br><br><a href="index.html" style="color:#15803D;font-weight:800">Go to Dashboard →</a>';
+    seedBtn.style.display = 'none';
+  } catch (err) {
+    console.error(err);
+    statusBox.className = 'setup-status';
+    statusBox.style.background = 'rgba(220,38,38,0.1)';
+    statusBox.style.color = '#991B1B';
+    statusBox.innerHTML = '<strong>Error:</strong> ' + (err.message || err) +
+      '<br><br>Make sure Firestore security rules have been applied (see setup guide).';
+    seedBtn.disabled = false;
+    seedBtn.textContent = 'Try again';
+  }
+});
+</script>
+
+</body>
+</html>
