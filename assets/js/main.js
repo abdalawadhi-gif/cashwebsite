@@ -101,6 +101,15 @@
   els.forEach(el => io.observe(el));
 })();
 
+/* Clickable cards (consultant cards on homepage link to their profile page) */
+(function clickableCards(){
+  document.querySelectorAll('[data-href]').forEach(card => {
+    card.addEventListener('click', () => {
+      window.location.href = card.getAttribute('data-href');
+    });
+  });
+})();
+
 /* ─── WhatsApp integration ───────────────────────────────── */
 (function whatsappIntegration(){
   const PHONE = '96522260820';
