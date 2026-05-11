@@ -555,10 +555,10 @@
 /* Settings card */
 .settings-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
-@media (max-width: 600px) {
+@media (max-width: 800px) {
   .settings-row { grid-template-columns: 1fr; }
 }
 .settings-row .field label {
@@ -596,3 +596,143 @@
 .admin-nav a.active {
   background: var(--ink); color: var(--cream); border-color: var(--ink);
 }
+
+/* ─── Manage Booking modal ──────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(14,21,48,0.55);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+}
+.modal-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.modal {
+  background: var(--white);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.25);
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
+}
+.modal-header h3 {
+  font-family: var(--font-ar); font-weight: 900;
+  font-size: 1.15rem;
+}
+.modal-close {
+  background: transparent; border: 0;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 22px; color: var(--ink-2);
+  transition: background .15s;
+}
+.modal-close:hover { background: var(--cream); }
+
+.modal-body { padding: 20px 22px; }
+.modal-body .detail-row {
+  display: flex; justify-content: space-between;
+  padding: 8px 0;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.modal-body .detail-row:last-of-type { border-bottom: 0; }
+.modal-body .detail-row .k {
+  color: var(--ink-2); font-weight: 600;
+}
+.modal-body .detail-row .v {
+  color: var(--ink); font-weight: 700; text-align: end;
+}
+
+.modal-form {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 2px solid var(--line);
+}
+.modal-form .field { margin-bottom: 14px; }
+.modal-form label {
+  display: block;
+  font-size: 12px; font-weight: 700;
+  color: var(--ink-2);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.modal-form select, .modal-form input, .modal-form textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--cream);
+  font-family: inherit; font-size: 14px; font-weight: 600;
+}
+.modal-form select:focus, .modal-form input:focus, .modal-form textarea:focus {
+  outline: none; border-color: var(--blue); background: var(--white);
+}
+.modal-form textarea { min-height: 60px; resize: vertical; }
+
+.modal-footer {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--line);
+  background: var(--cream);
+  border-radius: 0 0 16px 16px;
+  flex-wrap: wrap;
+}
+.modal-footer .btn-outline {
+  background: transparent;
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-family: inherit; font-weight: 700; font-size: 13px;
+  cursor: pointer;
+}
+.modal-footer .btn-outline:hover { background: var(--ink); color: var(--cream); }
+.modal-footer .btn-danger {
+  background: transparent;
+  border: 1.5px solid #DC2626;
+  color: #991B1B;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-family: inherit; font-weight: 700; font-size: 13px;
+  cursor: pointer;
+}
+.modal-footer .btn-danger:hover {
+  background: #DC2626; color: var(--cream);
+}
+.modal-footer .btn-save {
+  background: var(--ink); color: var(--cream); border: 0;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-family: inherit; font-weight: 800; font-size: 13px;
+  cursor: pointer;
+  margin-inline-start: auto;
+}
+.modal-footer .btn-save:hover { background: var(--blue); }
+.modal-footer .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.modal-error {
+  display: none;
+  padding: 10px 14px;
+  background: rgba(220,38,38,0.08);
+  border: 1px solid rgba(220,38,38,0.25);
+  color: #991B1B;
+  border-radius: 10px;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+/* Make table rows feel clickable */
+.bookings-table tbody tr { cursor: pointer; }

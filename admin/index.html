@@ -10,8 +10,8 @@
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="../assets/css/style.css?v=11" rel="stylesheet"/>
-<link href="../assets/css/admin.css?v=11" rel="stylesheet"/>
+<link href="../assets/css/style.css?v=12" rel="stylesheet"/>
+<link href="../assets/css/admin.css?v=12" rel="stylesheet"/>
 </head>
 <body>
 
@@ -83,11 +83,52 @@
   </main>
 </div>
 
+<!-- ─── Manage Booking Modal ─── -->
+<div class="modal-overlay" id="manageModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Manage Booking</h3>
+      <button class="modal-close" id="modalClose">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="mDetails"></div>
+
+      <div class="modal-form">
+        <div class="field">
+          <label for="mStatus">Status</label>
+          <select id="mStatus">
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="completed">Completed</option>
+            <option value="no-show">No-show</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="mDuration">Duration (minutes)</label>
+          <input type="number" id="mDuration" min="15" max="480" step="15"/>
+        </div>
+        <div class="field">
+          <label for="mAdminNotes">Internal notes (optional, not shown to customer)</label>
+          <textarea id="mAdminNotes" rows="2" placeholder="Any notes for your records…"></textarea>
+        </div>
+        <div class="modal-error" id="mError"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-outline" id="mCloseBtn">Close</button>
+      <button class="btn-danger" id="mDeleteBtn" style="display:none">Delete</button>
+      <button class="btn-save" id="mSaveBtn">Save changes</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import {
   auth, db, requireAuth, signOut,
-  collection, query, where, orderBy, getDocs, onSnapshot
-} from '../assets/js/firebase-config.js?v=11';
+  collection, query, where, orderBy, getDocs, onSnapshot,
+  doc, updateDoc, deleteDoc
+} from '../assets/js/firebase-config.js?v=12';
 
 let currentUser = null;
 let currentFilter = 'upcoming';
@@ -192,7 +233,7 @@ function renderBookings() {
   }
 
   body.innerHTML = list.map(b => `
-    <tr>
+    <tr data-id="${b.id}">
       <td data-label="Customer">
         <div class="customer-name">${esc(b.customerName || '—')}</div>
         <div class="customer-sub">${esc(b.customerPhone || '')} · ${esc(b.customerEmail || '')}</div>
@@ -213,6 +254,11 @@ function renderBookings() {
       </td>
     </tr>
   `).join('');
+
+  // Wire row clicks → open manage modal
+  body.querySelectorAll('tr[data-id]').forEach(row => {
+    row.addEventListener('click', () => openManageModal(row.dataset.id));
+  });
 }
 
 function formatDate(s) {
@@ -223,6 +269,93 @@ function formatDate(s) {
 function esc(s) {
   return String(s ?? '').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 }
+
+// ────── Manage booking modal ──────
+let currentBookingId = null;
+const modal = document.getElementById('manageModal');
+const mDetails = document.getElementById('mDetails');
+const mStatus = document.getElementById('mStatus');
+const mDuration = document.getElementById('mDuration');
+const mAdminNotes = document.getElementById('mAdminNotes');
+const mError = document.getElementById('mError');
+const mSave = document.getElementById('mSaveBtn');
+const mDelete = document.getElementById('mDeleteBtn');
+
+function openManageModal(bookingId) {
+  const b = allBookings.find(x => x.id === bookingId);
+  if (!b) return;
+  currentBookingId = bookingId;
+  mError.style.display = 'none';
+
+  // Show booking details (read-only)
+  mDetails.innerHTML = `
+    <div class="detail-row"><span class="k">Customer</span><span class="v">${esc(b.customerName)}</span></div>
+    <div class="detail-row"><span class="k">Contact</span><span class="v">${esc(b.customerPhone)} · ${esc(b.customerEmail)}</span></div>
+    <div class="detail-row"><span class="k">Package</span><span class="v">${esc(b.packageName || b.packageId)}</span></div>
+    <div class="detail-row"><span class="k">Consultant</span><span class="v">${esc(b.consultantName)}</span></div>
+    <div class="detail-row"><span class="k">Date · Time</span><span class="v">${formatDate(b.date)} · ${esc(b.time || '')}</span></div>
+    <div class="detail-row"><span class="k">Format</span><span class="v">${b.format === 'online' ? '💻 Online' : '🏢 In-person'}</span></div>
+    <div class="detail-row"><span class="k">Price</span><span class="v">${b.price || 0} KWD</span></div>
+    ${b.customerNotes ? `<div class="detail-row"><span class="k">Customer notes</span><span class="v">${esc(b.customerNotes)}</span></div>` : ''}
+  `;
+
+  mStatus.value = b.status || 'pending';
+  mDuration.value = b.duration || 60;
+  mAdminNotes.value = b.adminNotes || '';
+
+  // Only admin can delete
+  mDelete.style.display = currentUser.role === 'admin' ? '' : 'none';
+
+  modal.classList.add('show');
+}
+
+function closeModal() {
+  modal.classList.remove('show');
+  currentBookingId = null;
+}
+
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('mCloseBtn').addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+mSave.addEventListener('click', async () => {
+  if (!currentBookingId) return;
+  mError.style.display = 'none';
+  mSave.disabled = true;
+  mSave.textContent = 'Saving…';
+  try {
+    const updates = {
+      status: mStatus.value,
+      duration: parseInt(mDuration.value) || 60,
+      adminNotes: mAdminNotes.value.trim(),
+    };
+    await updateDoc(doc(db, 'bookings', currentBookingId), updates);
+    closeModal();
+  } catch (err) {
+    console.error(err);
+    mError.textContent = '⚠️ ' + (err.message || err);
+    mError.style.display = '';
+  } finally {
+    mSave.disabled = false;
+    mSave.textContent = 'Save changes';
+  }
+});
+
+mDelete.addEventListener('click', async () => {
+  if (!currentBookingId) return;
+  if (!confirm('Permanently delete this booking? This cannot be undone.')) return;
+  mError.style.display = 'none';
+  mDelete.disabled = true;
+  try {
+    await deleteDoc(doc(db, 'bookings', currentBookingId));
+    closeModal();
+  } catch (err) {
+    mError.textContent = '⚠️ ' + (err.message || err);
+    mError.style.display = '';
+  } finally {
+    mDelete.disabled = false;
+  }
+});
 
 // Logout
 document.getElementById('logoutBtn').addEventListener('click', async () => {

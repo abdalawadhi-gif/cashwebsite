@@ -38,11 +38,15 @@ import {
   };
 
   // ────────────── Fetch consultant config from Firestore ──────────────
+  state.slotStepMinutes = 30; // default
+  state.bufferMinutes = 0;
   try {
     const cSnap = await getDoc(doc(db, 'consultants', consultantId));
     if (cSnap.exists()) {
       const c = cSnap.data();
       state.workingHours = c.workingHours || null;
+      state.slotStepMinutes = c.slotStepMinutes || 30;
+      state.bufferMinutes = c.bufferMinutes || 0;
     }
   } catch (e) {
     console.warn('Could not load consultant from Firestore, using defaults:', e);
@@ -255,7 +259,7 @@ import {
     const dateKey = isoDate(state.date);
     const workSlots = state.workingHours[dayKey] || [];
     const durationMin = state.pkg.duration;
-    const stepMin = 30;
+    const stepMin = state.slotStepMinutes || 30;
 
     // Check for all-day blackout
     const blackouts = state.blackouts[dateKey] || [];

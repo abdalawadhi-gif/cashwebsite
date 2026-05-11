@@ -10,8 +10,8 @@
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="../assets/css/style.css?v=11" rel="stylesheet"/>
-<link href="../assets/css/admin.css?v=11" rel="stylesheet"/>
+<link href="../assets/css/style.css?v=12" rel="stylesheet"/>
+<link href="../assets/css/admin.css?v=12" rel="stylesheet"/>
 </head>
 <body>
 
@@ -152,6 +152,16 @@
                 <input type="number" id="bufferMin" min="0" max="60" step="5"/>
               </div>
               <div class="field">
+                <label for="slotStep">Time slot interval (minutes)</label>
+                <select id="slotStep">
+                  <option value="15">Every 15 minutes</option>
+                  <option value="30">Every 30 minutes</option>
+                  <option value="60">Every hour</option>
+                  <option value="90">Every 90 minutes</option>
+                  <option value="120">Every 2 hours</option>
+                </select>
+              </div>
+              <div class="field">
                 <label for="horizonDays">Booking horizon (days ahead)</label>
                 <input type="number" id="horizonDays" min="1" max="365" step="1"/>
               </div>
@@ -176,7 +186,7 @@ import {
   db, auth, requireAuth, signOut,
   collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
   query, where, serverTimestamp
-} from '../assets/js/firebase-config.js?v=11';
+} from '../assets/js/firebase-config.js?v=12';
 
 const DAYS = [
   { key: 'sun', label: 'Sunday' },
@@ -237,6 +247,7 @@ async function loadAll() {
     renderHours();
     document.getElementById('bufferMin').value = consultantData.bufferMinutes ?? 0;
     document.getElementById('horizonDays').value = consultantData.bookingHorizonDays ?? 30;
+    document.getElementById('slotStep').value = consultantData.slotStepMinutes ?? 30;
     await loadBlackouts();
     await loadExtraSlots();
     document.getElementById('loadingMsg').style.display = 'none';
@@ -458,7 +469,8 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
   try {
     const bufferMinutes = parseInt(document.getElementById('bufferMin').value) || 0;
     const bookingHorizonDays = parseInt(document.getElementById('horizonDays').value) || 30;
-    await updateDoc(doc(db, 'consultants', selectedId), { bufferMinutes, bookingHorizonDays });
+    const slotStepMinutes = parseInt(document.getElementById('slotStep').value) || 30;
+    await updateDoc(doc(db, 'consultants', selectedId), { bufferMinutes, bookingHorizonDays, slotStepMinutes });
     status.textContent = '✓ Saved';
     status.className = 'save-status ok';
     setTimeout(() => { status.textContent = ''; }, 2500);
